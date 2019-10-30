@@ -1,0 +1,19 @@
+{
+    "type": "package",
+    "name": "okkero/drag-drop-list",
+    "summary": "TODO",
+    "license": "MIT",
+    "version": "0.0.1",
+    "exposed-modules": [
+        "OrderableList"
+    ],
+    "elm-version": "0.19.0 <= v < 0.20.0",
+    "dependencies": {
+        "elm/core": "1.0.2 <= v < 2.0.0",
+        "elm/html": "1.0.0 <= v < 2.0.0",
+        "elm/time": "1.0.0 <= v < 2.0.0",
+        "elm-community/list-extra": "8.2.2 <= v < 9.0.0",
+        "zaboco/elm-draggable": "4.0.5 <= v < 5.0.0"
+    },
+    "test-dependencies": {}
+}
