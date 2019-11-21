@@ -34,7 +34,7 @@ type alias Config =
 
 
 init : Config -> List a -> ( Model a, Cmd Msg )
-init config apps =
+init config elements =
     let
         ( _, appsDict ) =
             List.foldl
@@ -42,10 +42,10 @@ init config apps =
                     ( id + 1, Dict.insert id app acc )
                 )
                 ( 0, Dict.empty )
-                apps
+                elements
     in
         ( Model
-            { elementOrder = List.range 0 (List.length apps - 1)
+            { elementOrder = List.range 0 (List.length elements - 1)
             , elements = appsDict
             , drag = Draggable.init
             , currentlyDragging = Nothing
@@ -169,8 +169,8 @@ update msg (Model model) =
                 ( Model { model | release = newAnimationState }, Cmd.none )
 
 
-view : (a -> Html Msg) -> Model a -> Html Msg
-view viewElement (Model model) =
+view : (Msg -> msg) -> (a -> Html msg) -> Model a -> Html msg
+view toMsg viewElement (Model model) =
     let
         getOffset index id =
             case model.currentlyDragging of
@@ -260,6 +260,7 @@ view viewElement (Model model) =
                                 (justReleased id)
                                 (getOffset index id)
                                 id
+                                toMsg
                                 (viewElement element)
                                 :: html
                 )
@@ -302,11 +303,6 @@ type ReleaseAnimation
     | ReleaseJustReleased Int Float
 
 
-border : Int
-border =
-    1
-
-
 margin : Int
 margin =
     5
@@ -314,7 +310,7 @@ margin =
 
 fullHeight : Config -> Int
 fullHeight config =
-    border * 2 + margin + config.elementHeight
+    margin + config.elementHeight
 
 
 orderOffset : Config -> Float -> Int
@@ -336,17 +332,18 @@ dragConfig =
         ]
 
 
-renderElement : Int -> Bool -> Bool -> Bool -> Maybe Float -> Int -> Html Msg -> Html Msg
-renderElement elementHeight dragged animatingRelease justReleased maybeOffset id element =
+renderElement : Int -> Bool -> Bool -> Bool -> Maybe Float -> Int -> (Msg -> msg) -> Html msg -> Html msg
+renderElement elementHeight dragged animatingRelease justReleased maybeOffset id toMsg element =
     H.div
-        [ Draggable.mouseTrigger id Draggable
-        , case maybeOffset of
-            Just offset ->
-                A.style "transform" ("translate(0, " ++ String.fromFloat offset ++ "px)")
+        [ Draggable.mouseTrigger id (Draggable >> toMsg)
+        , A.style "transform"
+            (case maybeOffset of
+                Just offset ->
+                    "translate(0, " ++ String.fromFloat offset ++ "px)"
 
-            Nothing ->
-                A.attribute "" ""
-        , A.style "border" (String.fromInt border ++ "px solid black")
+                Nothing ->
+                    "none"
+            )
         , A.style "margin" (String.fromInt margin ++ "px")
         , A.style "height" (String.fromInt elementHeight ++ "px")
         , A.style "transition"
