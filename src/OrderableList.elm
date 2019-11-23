@@ -1,4 +1,4 @@
-module OrderableList exposing (Config, Model, Msg, init, subscriptions, update, view)
+module OrderableList exposing (Config, Model, Msg, getOrder, init, setOrder, subscriptions, update, view)
 
 import Dict exposing (Dict)
 import Draggable
@@ -34,19 +34,14 @@ type alias Config =
 
 
 init : Config -> List a -> ( Model a, Cmd Msg )
-init config elements =
+init config elementList =
     let
-        ( _, appsDict ) =
-            List.foldl
-                (\app ( id, acc ) ->
-                    ( id + 1, Dict.insert id app acc )
-                )
-                ( 0, Dict.empty )
-                elements
+        ( elements, elementOrder ) =
+            buildElements elementList
     in
         ( Model
-            { elementOrder = List.range 0 (List.length elements - 1)
-            , elements = appsDict
+            { elementOrder = elementOrder
+            , elements = elements
             , drag = Draggable.init
             , currentlyDragging = Nothing
             , config = config
@@ -286,6 +281,25 @@ subscriptions (Model model) =
         ]
 
 
+getOrder : Model a -> List a
+getOrder (Model model) =
+    model.elementOrder
+        |> List.filterMap (\id -> Dict.get id model.elements)
+
+
+setOrder : Model a -> List a -> Model a
+setOrder (Model model) order =
+    let
+        ( elements, elementOrder ) =
+            buildElements order
+    in
+        Model
+            { model
+                | elements = elements
+                , elementOrder = elementOrder
+            }
+
+
 
 {- INTERNAL -}
 
@@ -301,6 +315,23 @@ type ReleaseAnimation
     = ReleaseNone
     | ReleaseAnimating Int
     | ReleaseJustReleased Int Float
+
+
+buildElements : List a -> ( Dict Int a, List Int )
+buildElements elementList =
+    let
+        ( _, elements ) =
+            List.foldl
+                (\app ( id, acc ) ->
+                    ( id + 1, Dict.insert id app acc )
+                )
+                ( 0, Dict.empty )
+                elementList
+
+        elementOrder =
+            List.range 0 (List.length elementList - 1)
+    in
+        ( elements, elementOrder )
 
 
 margin : Int
