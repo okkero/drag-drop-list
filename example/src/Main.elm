@@ -69,11 +69,16 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UpdateList listMsg ->
-            let
-                ( listModel, listCmd ) =
-                    OrderableList.update listMsg model.list
-            in
-                ( { model | list = listModel }, Cmd.map UpdateList listCmd )
+            case OrderableList.update listMsg model.list of
+                OrderableList.UpdateState ( listModel, listCmd ) ->
+                    ( { model | list = listModel }, Cmd.map UpdateList listCmd )
+
+                OrderableList.ElementDropped element ->
+                    let
+                        _ =
+                            Debug.log "Dropped" element
+                    in
+                        ( model, Cmd.none )
 
 
 view : Model -> Html Msg

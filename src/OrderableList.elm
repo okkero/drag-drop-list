@@ -1,4 +1,4 @@
-module OrderableList exposing (Config, Model, Msg, getOrder, init, setOrder, subscriptions, update, view)
+module OrderableList exposing (Config, Model, Msg, Update(..), getOrder, init, setOrder, subscriptions, update, view)
 
 import Dict exposing (Dict)
 import Draggable
@@ -6,6 +6,7 @@ import Draggable.Events as DraggableEvents
 import Html as H exposing (Html)
 import Html.Attributes as A
 import List.Extra as ListExtra
+import Task
 import Time
 
 
@@ -26,6 +27,12 @@ type Msg
     | OnDragStart Int
     | OnDragEnd
     | StepReleaseAnimation
+    | ElementJustDropped Int
+
+
+type Update a
+    = UpdateState ( Model a, Cmd Msg )
+    | ElementDropped a
 
 
 type alias Config =
@@ -51,7 +58,7 @@ init config elementList =
         )
 
 
-update : Msg -> Model a -> ( Model a, Cmd Msg )
+update : Msg -> Model a -> Update a
 update msg (Model model) =
     case msg of
         Draggable draggableMsg ->
@@ -59,21 +66,22 @@ update msg (Model model) =
                 ( newModel, cmd ) =
                     Draggable.update dragConfig draggableMsg model
             in
-                ( Model newModel, cmd )
+                UpdateState ( Model newModel, cmd )
 
         OnDragBy ( _, dy ) ->
             case model.currentlyDragging of
                 Nothing ->
-                    ( Model model, Cmd.none )
+                    UpdateState ( Model model, Cmd.none )
 
                 Just dragging ->
-                    ( Model
-                        { model
-                            | currentlyDragging =
-                                Just { dragging | offset = dragging.offset + dy }
-                        }
-                    , Cmd.none
-                    )
+                    UpdateState
+                        ( Model
+                            { model
+                                | currentlyDragging =
+                                    Just { dragging | offset = dragging.offset + dy }
+                            }
+                        , Cmd.none
+                        )
 
         OnDragStart id ->
             let
@@ -82,20 +90,21 @@ update msg (Model model) =
             in
                 case maybeIndex of
                     Nothing ->
-                        ( Model model, Cmd.none )
+                        UpdateState ( Model model, Cmd.none )
 
                     Just index ->
-                        ( Model
-                            { model
-                                | currentlyDragging =
-                                    Just
-                                        { subjectId = id
-                                        , subjectOrderIndex = index
-                                        , offset = 0.0
-                                        }
-                            }
-                        , Cmd.none
-                        )
+                        UpdateState
+                            ( Model
+                                { model
+                                    | currentlyDragging =
+                                        Just
+                                            { subjectId = id
+                                            , subjectOrderIndex = index
+                                            , offset = 0.0
+                                            }
+                                }
+                            , Cmd.none
+                            )
 
         OnDragEnd ->
             case model.currentlyDragging of
@@ -133,20 +142,21 @@ update msg (Model model) =
                                     []
                                     model.elementOrder
                     in
-                        ( Model
-                            { model
-                                | currentlyDragging = Nothing
-                                , elementOrder = newOrder
-                                , release =
-                                    ReleaseJustReleased
-                                        dragging.subjectId
-                                        (dragging.offset - toFloat ((newIndex - dragging.subjectOrderIndex) * fullHeight model.config))
-                            }
-                        , Cmd.none
-                        )
+                        UpdateState
+                            ( Model
+                                { model
+                                    | currentlyDragging = Nothing
+                                    , elementOrder = newOrder
+                                    , release =
+                                        ReleaseJustReleased
+                                            dragging.subjectId
+                                            (dragging.offset - toFloat ((newIndex - dragging.subjectOrderIndex) * fullHeight model.config))
+                                }
+                            , Task.perform identity <| Task.succeed <| ElementJustDropped dragging.subjectId
+                            )
 
                 Nothing ->
-                    ( Model model, Cmd.none )
+                    UpdateState ( Model model, Cmd.none )
 
         StepReleaseAnimation ->
             let
@@ -161,7 +171,15 @@ update msg (Model model) =
                         ReleaseJustReleased id _ ->
                             ReleaseAnimating id
             in
-                ( Model { model | release = newAnimationState }, Cmd.none )
+                UpdateState ( Model { model | release = newAnimationState }, Cmd.none )
+
+        ElementJustDropped id -> --todo needs new index
+            case Dict.get id model.elements of
+                Just element ->
+                    ElementDropped element
+
+                Nothing ->
+                    UpdateState ( Model model, Cmd.none )
 
 
 view : (Msg -> msg) -> (a -> Html msg) -> Model a -> Html msg
