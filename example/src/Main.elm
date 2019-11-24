@@ -15,6 +15,7 @@ type alias Card =
 
 type alias Model =
     { list : OrderableList.Model Card
+    , statusText : String
     }
 
 
@@ -60,6 +61,7 @@ init () =
             OrderableList.init config cards
     in
         ( { list = listModel
+          , statusText = ""
           }
         , Cmd.map UpdateList listCmd
         )
@@ -73,17 +75,21 @@ update msg model =
                 OrderableList.UpdateState ( listModel, listCmd ) ->
                     ( { model | list = listModel }, Cmd.map UpdateList listCmd )
 
-                OrderableList.ElementDropped element ->
+                OrderableList.ElementDropped element index ->
                     let
-                        _ =
-                            Debug.log "Dropped" element
+                        statusText =
+                            "Dropped card titled '" ++ element.title ++ "' at index " ++ String.fromInt index
                     in
-                        ( model, Cmd.none )
+                        ( { model | statusText = statusText }, Cmd.none )
 
 
 view : Model -> Html Msg
 view model =
-    OrderableList.view UpdateList renderCard model.list
+    H.div []
+        [ H.div [ A.class "card-list" ]
+            [ OrderableList.view UpdateList renderCard model.list ]
+        , H.text model.statusText
+        ]
 
 
 renderCard : Card -> Html Msg

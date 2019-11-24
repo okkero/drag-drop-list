@@ -5,3 +5,6 @@ build:
 
 clean:
 	rm -r target
+
+start: build
+	elm reactor

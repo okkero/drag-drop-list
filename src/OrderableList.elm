@@ -27,12 +27,12 @@ type Msg
     | OnDragStart Int
     | OnDragEnd
     | StepReleaseAnimation
-    | ElementJustDropped Int
+    | ElementJustDropped Int Int
 
 
 type Update a
     = UpdateState ( Model a, Cmd Msg )
-    | ElementDropped a
+    | ElementDropped a Int
 
 
 type alias Config =
@@ -152,7 +152,7 @@ update msg (Model model) =
                                             dragging.subjectId
                                             (dragging.offset - toFloat ((newIndex - dragging.subjectOrderIndex) * fullHeight model.config))
                                 }
-                            , Task.perform identity <| Task.succeed <| ElementJustDropped dragging.subjectId
+                            , Task.perform identity <| Task.succeed <| ElementJustDropped dragging.subjectId newIndex
                             )
 
                 Nothing ->
@@ -173,10 +173,10 @@ update msg (Model model) =
             in
                 UpdateState ( Model { model | release = newAnimationState }, Cmd.none )
 
-        ElementJustDropped id -> --todo needs new index
+        ElementJustDropped id index ->
             case Dict.get id model.elements of
                 Just element ->
-                    ElementDropped element
+                    ElementDropped element index
 
                 Nothing ->
                     UpdateState ( Model model, Cmd.none )
