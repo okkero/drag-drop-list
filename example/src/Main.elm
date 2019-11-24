@@ -75,10 +75,15 @@ update msg model =
                 OrderableList.UpdateState ( listModel, listCmd ) ->
                     ( { model | list = listModel }, Cmd.map UpdateList listCmd )
 
-                OrderableList.ElementDropped element index ->
+                OrderableList.ElementDropped event ->
                     let
                         statusText =
-                            "Dropped card titled '" ++ element.title ++ "' at index " ++ String.fromInt index
+                            "Card titled '"
+                                ++ event.element.title
+                                ++ "' was moved from index "
+                                ++ String.fromInt event.oldIndex
+                                ++ " to index "
+                                ++ String.fromInt event.newIndex
                     in
                         ( { model | statusText = statusText }, Cmd.none )
 
