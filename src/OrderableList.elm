@@ -1,18 +1,38 @@
 module OrderableList exposing
-    ( Config
-    , ElementDroppedEvent
-    , Model
+    ( Model
     , Msg
     , Update(..)
-    , getOrder
+    , ElementDroppedEvent
+    , Config
     , init
-    , setOrder
-    , subscriptions
     , update
     , view
+    , subscriptions
+    , getOrder
+    , setOrder
     )
 
 {-| Display a list that the user can interact with by picking up and reordering its items.
+
+
+# Types
+
+@docs Model
+@docs Msg
+@docs Update
+@docs ElementDroppedEvent
+@docs Config
+
+
+# Functions
+
+@docs init
+@docs update
+@docs view
+@docs subscriptions
+@docs getOrder
+@docs setOrder
+
 -}
 
 import Dict exposing (Dict)
@@ -51,7 +71,7 @@ type Msg
 
 {-| Update actions for orderable lists
 
-Call `OrderableList.update` upon receiving `UpdateState`.
+Call [`update`](#update) upon receiving `UpdateState`.
 Use `ElementDropped` to be notified when the user dropped an element in the list.
 
 -}
@@ -69,7 +89,7 @@ type alias ElementDroppedEvent a =
     }
 
 
-{-| Passed to `init` when initialising an orderable list
+{-| Passed to [`init`](#init) when initialising an orderable list
 
 Element height must be known in order to properly position the list elements relative to each other.
 
