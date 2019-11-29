@@ -1,7 +1,7 @@
 {
     "type": "package",
     "name": "okkero/drag-drop-list",
-    "summary": "TODO",
+    "summary": "Display a list that the user can reorder",
     "license": "MIT",
     "version": "0.0.1",
     "exposed-modules": [
