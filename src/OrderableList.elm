@@ -1,4 +1,19 @@
-module OrderableList exposing (Config, ElementDroppedEvent, Model, Msg, Update(..), getOrder, init, setOrder, subscriptions, update, view)
+module OrderableList exposing
+    ( Config
+    , ElementDroppedEvent
+    , Model
+    , Msg
+    , Update(..)
+    , getOrder
+    , init
+    , setOrder
+    , subscriptions
+    , update
+    , view
+    )
+
+{-| Display a list that the user can interact with by picking up and reordering its items.
+-}
 
 import Dict exposing (Dict)
 import Draggable
@@ -10,6 +25,8 @@ import Task
 import Time
 
 
+{-| The internal state of an orderable list
+-}
 type Model a
     = Model
         { elementOrder : List Int
@@ -21,6 +38,8 @@ type Model a
         }
 
 
+{-| Internal messages for orderable lists
+-}
 type Msg
     = Draggable (Draggable.Msg Int)
     | OnDragBy Draggable.Delta
@@ -30,11 +49,19 @@ type Msg
     | ElementJustDropped Int Int Int
 
 
+{-| Update actions for orderable lists
+
+Call `OrderableList.update` upon receiving `UpdateState`.
+Use `ElementDropped` to be notified when the user dropped an element in the list.
+
+-}
 type Update a
     = UpdateState ( Model a, Cmd Msg )
     | ElementDropped (ElementDroppedEvent a)
 
 
+{-| Returned from update in `ElementDropped` whenever the user dropped an element in the list.
+-}
 type alias ElementDroppedEvent a =
     { element : a
     , oldIndex : Int
@@ -42,11 +69,18 @@ type alias ElementDroppedEvent a =
     }
 
 
+{-| Passed to `init` when initialising an orderable list
+
+Element height must be known in order to properly position the list elements relative to each other.
+
+-}
 type alias Config =
     { elementHeight : Int
     }
 
 
+{-| Initialise an orderable list
+-}
 init : Config -> List a -> ( Model a, Cmd Msg )
 init config elementList =
     let
@@ -65,6 +99,8 @@ init config elementList =
         )
 
 
+{-| Notify the orderable list that it needs to perform an update
+-}
 update : Msg -> Model a -> Update a
 update msg (Model model) =
     case msg of
@@ -195,6 +231,8 @@ update msg (Model model) =
                     UpdateState ( Model model, Cmd.none )
 
 
+{-| Render the orderable list, passing a function to render each element
+-}
 view : (Msg -> msg) -> (a -> Html msg) -> Model a -> Html msg
 view toMsg viewElement (Model model) =
     let
@@ -296,6 +334,11 @@ view toMsg viewElement (Model model) =
         H.div [] elements
 
 
+{-| Handle drag and animation subscriptions
+
+This is needed for dragging and animations to work
+
+-}
 subscriptions : Model a -> Sub Msg
 subscriptions (Model model) =
     Sub.batch
@@ -312,12 +355,16 @@ subscriptions (Model model) =
         ]
 
 
+{-| Get the current order of a list
+-}
 getOrder : Model a -> List a
 getOrder (Model model) =
     model.elementOrder
         |> List.filterMap (\id -> Dict.get id model.elements)
 
 
+{-| Set the order of a list
+-}
 setOrder : Model a -> List a -> Model a
 setOrder (Model model) order =
     let
